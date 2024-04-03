@@ -1,0 +1,83 @@
+function fetchData() {
+    fetch('https://api.apilayer.com/fixer/latest', {
+        headers: {
+            'apikey': 'g1Op0koKpmo8p9wHCgfPEeKGPZzErztR'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            const updatedData = {};
+            for (const currency in data.rates) {
+                updatedData[currency] = addFloatStrings(data.rates[currency], 10.0002);
+            }
+            displayTable(updatedData);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+function displayTable(updatedData) {
+    const tableBody = document.querySelector('#forexRatesTable tbody');
+    tableBody.innerHTML = '';
+    for (const currency in updatedData) {
+        const row = document.createElement('tr');
+        const currencyCell = document.createElement('td');
+        currencyCell.textContent = currency;
+        row.appendChild(currencyCell);
+        const valueCell = document.createElement('td');
+        valueCell.textContent = updatedData[currency];
+        if (isEven(updatedData[currency]) || currency === 'HKD') {
+            row.classList.add('redBorder', currency);
+        }
+        row.appendChild(valueCell);
+        tableBody.appendChild(row);
+    }
+}
+
+function isEven(s) {
+    let l = s.length;
+    let dotSeen = false;
+    for (let i = l - 1; i >= 0; i--) {
+        if (s[i] === '0' && dotSeen === false)
+            continue;
+        if (s[i] === '.') {
+            dotSeen = true;
+            continue;
+        }
+        return (s[i] - '0') % 2 === 0;
+    }
+}
+
+function addFloatStrings(num1, num2) {
+    let str1 = num1.toString(), str2 = num2.toString();
+    let [int1, dec1] = str1.split('.');
+    let [int2, dec2] = str2.split('.');
+    dec1 = dec1 === undefined ? '0' : dec1;
+    dec2 = dec2 === undefined ? '0' : dec2;
+    let sumLeft = (parseInt(int1) || 0) + (parseInt(int2) || 0)
+    const maxLen = Math.max(dec1.length, dec2.length)
+    if (dec1.length < maxLen) {
+        dec1 = dec1.padEnd(maxLen, '0')
+    } else {
+        dec2 = dec2.padEnd(maxLen, '0')
+    }
+    let n = dec1.length, m = dec2.length, sumRight = '', c = 0;
+    for (let i = n - 1, j = m - 1; i >= 0 || j >= 0; ) {
+        if (i >= 0) {
+            c += dec1[i] - '0';
+            i--;
+        }
+        if (j >= 0) {
+            c += dec2[j] - '0';
+            j--;
+        }
+        sumRight += c % 10;
+        c = Math.floor(c / 10);
+    }
+    if (c > 0) {
+        sumLeft += 1;
+    }
+    sumRight = sumRight.split('').reverse().join('');
+    return sumLeft.toString() + "." + sumRight;
+}
+
+window.onload = fetchData()
